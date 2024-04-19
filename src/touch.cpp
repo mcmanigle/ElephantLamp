@@ -25,6 +25,9 @@
 #define AXS_GET_POINT_Y(buf,point_index) (((uint16_t)(buf[AXS_TOUCH_ONE_POINT_LEN*point_index+AXS_TOUCH_Y_H_POS] & 0x0F) <<8) + (uint16_t)buf[AXS_TOUCH_ONE_POINT_LEN*point_index+AXS_TOUCH_Y_L_POS])
 #define AXS_GET_POINT_EVENT(buf,point_index) (buf[AXS_TOUCH_ONE_POINT_LEN*point_index+AXS_TOUCH_EVENT_POS] >> 6)
 
+bool touch_flag = false;
+void setTouchFlag(void *data);
+void readTouch();
 
 const uint8_t ALS_ADDRESS = 0x3B;
 const uint8_t read_touchpad_cmd[8] = {0xb5, 0xab, 0xa5, 0x5a, 0x0, 0x0, 0x0, 0x8};
@@ -35,19 +38,47 @@ unsigned long last_touch_millis = -250;
 
 // Screen size 640 x 180
 
+void (*touchCallback)(int x, int y) = nullptr;
 
-void setupTouch()
+void setupTouch(void (*callback)(int x, int y))
 {
-  pinMode(TOUCH_INT, INPUT_PULLUP);
+  touchCallback = callback;
+
   pinMode(TOUCH_RES, OUTPUT);
   digitalWrite(TOUCH_RES, HIGH);delay(2);
   digitalWrite(TOUCH_RES, LOW);delay(10);
   digitalWrite(TOUCH_RES, HIGH);delay(2);
+
   Wire.begin(TOUCH_IICSDA, TOUCH_IICSCL);
+
+  gpio_config_t gpio_conf;
+  gpio_conf.pin_bit_mask = BIT64(TOUCH_INT);
+  gpio_conf.mode = GPIO_MODE_INPUT;
+  gpio_conf.pull_up_en = GPIO_PULLUP_ENABLE;
+  gpio_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+  gpio_conf.intr_type = GPIO_INTR_LOW_LEVEL;
+  gpio_config(&gpio_conf);
+  gpio_set_intr_type(TOUCH_INT_GPIO, GPIO_INTR_LOW_LEVEL);
+  gpio_install_isr_service(0);
+  gpio_isr_handler_add(TOUCH_INT_GPIO, setTouchFlag, nullptr);
 }
 
-void loopTouch(void (*callback)(int x, int y))
+void setTouchFlag(void *data)
 {
+  touch_flag = true;
+}
+
+void loopTouch() {
+  if(touch_flag) {
+    touch_flag = false;
+    readTouch();
+  }
+}
+
+void readTouch()
+{
+  Serial.println("readTouch()");
+  
   const int debug = 0;
   int code = 0;
 
@@ -63,8 +94,16 @@ void loopTouch(void (*callback)(int x, int y))
     return;
   }
   Wire.requestFrom(ALS_ADDRESS, (uint8_t)8);
-  while (!Wire.available());
-  Wire.readBytes(buff, 8);
+  unsigned long timeout_start_millis = millis();
+  while (!Wire.available())
+    if(millis() - timeout_start_millis > 100)
+      break;
+  if(Wire.available())
+    Wire.readBytes(buff, 8);
+  else {
+    Serial.printf("Error in loopTouch(): Wire never available");
+    return;
+  }
 
   uint16_t pointX;
   uint16_t pointY;
@@ -86,7 +125,7 @@ void loopTouch(void (*callback)(int x, int y))
     if(millis() - last_touch_millis > touch_delay)
     {
       if(debug > 0) printf("callback!\n");
-      callback(pointX, pointY);
+      touchCallback(pointX, pointY);
       last_touch_millis = millis();
     }
     else if(debug > 0) printf("delay!\n");

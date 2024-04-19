@@ -9,7 +9,8 @@
 const char* ha_host = "192.168.44.10";
 const int ha_port = 8123;
 const char* ha_sun_path            = "/api/states/sun.sun";
-const char* ha_forecast_path       = "/api/states/weather.510_grant_forest";
+const char* ha_weather_path        = "/api/states/weather.510_grant_forest";
+const char* ha_forecast_path       = "/api/states/sensor.home_forecast_hourly";
 const char* ha_nursery_temp_path   = "/api/states/sensor.nursery_temperature";
 const char* ha_millis_path         = "/api/states/input_number.elephant_lamp_millis";
 
@@ -19,7 +20,7 @@ const char* ha_light_entity_id     = "light.main_bedroom_hue_room";
 
 const char* ha_authorization_token = HA_AUTHORIZATION_TOKEN;
 
-const unsigned char ha_debug_level = 4;
+const unsigned char ha_debug_level = 5;
 
 unsigned long ntpPreviousMillis = 0 - 600000;
 const unsigned long ntpInterval = 30000;
@@ -31,6 +32,8 @@ const int   zuluOffsetHoursDST = -4;
 
 struct tm timeinfo;
 time_t next_sun_change;
+
+char weather_temp_unit_string[5];
 
 char nursery_temperature_string[8];
 bool outside_time_night;
@@ -148,13 +151,30 @@ void updateHA() {
 
   if(command == 1)
   {
-    result = retrieveHAJson(ha_forecast_path);
+    result = retrieveHAJson(ha_weather_path);
 
     if(!result.isNull())
     {
       strcpy(outside_weather_string, result["state"].as<const char*>());
+      strcpy(weather_temp_unit_string, result["attributes"]["temperature_unit"].as<const char*>());
       sprintf(outside_temperature_string, "%d %s", result["attributes"]["temperature"].as<int>(),
-                                                   result["attributes"]["temperature_unit"].as<const char*>());
+                                                   weather_temp_unit_string);
+    }
+
+    if(ha_debug_level > 3) {
+      Serial.print("Outside Weather String: ");
+      Serial.println(outside_weather_string);
+      Serial.print("Outside Temperature String: ");
+      Serial.println(outside_temperature_string);
+    }
+  }
+
+  if(command == 2)
+  {
+    result = retrieveHAJson(ha_forecast_path);
+
+    if(!result.isNull())
+    {
       for(int i = 0; i < 5; i++)
       {
         struct tm t;
@@ -171,14 +191,10 @@ void updateHA() {
         strcpy(forecast_weather_strings[i], result["attributes"]["forecast"][i]["condition"].as<const char*>());
 
         sprintf(forecast_temperature_strings[i], "%d %s", result["attributes"]["forecast"][i]["temperature"].as<int>(),
-                                                          result["attributes"]["temperature_unit"].as<const char*>());
+                                                          weather_temp_unit_string);
       }
 
       if(ha_debug_level > 3) {
-        Serial.print("Outside Weather String: ");
-        Serial.println(outside_weather_string);
-        Serial.print("Outside Temperature String: ");
-        Serial.println(outside_temperature_string);
         for(int i = 0; i < 5; i++) {
           Serial.printf("Forecast Time String #%d: ", i+1);
           Serial.println(forecast_time_strings[i]);
@@ -191,7 +207,7 @@ void updateHA() {
     }
   }
 
-  if(command == 2)
+  if(command == 3)
   {
     result = retrieveHAJson(ha_nursery_temp_path);
 
@@ -206,7 +222,7 @@ void updateHA() {
     }
   }
 
-  if(command == 3)
+  if(command == 4)
   {
     JsonDocument post_params;
     post_params["state"] = millis();
@@ -214,7 +230,7 @@ void updateHA() {
     result = retrieveHAJson(ha_millis_path, &post_params);
   }
 
-  command = (command + 1) % 4;
+  command = (command + 1) % 5;
 }
 
 

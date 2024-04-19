@@ -182,7 +182,7 @@ void setup()
   sprite.setSwapBytes(1);
 
   setupBacklight();
-  setupTouch();
+  setupTouch(&touchCallback);
   axs15231_init();
 
   configTzTime(tzString, ntpServer);
@@ -198,15 +198,14 @@ void loop() {
   // printRamInfo();
 
   loopNetwork();
-
-  loopTouch(&touchCallback);
+  loopTouch();
 
   if( timeinfo.tm_hour < 7 || timeinfo.tm_hour >= 19 )
   {
     if( (current_page != DIM_PAGE                      ) &&
         (millis() - last_touch_millis > 2*60*1000      )    )
     {
-      backlightSetPct(10);
+      backlightSetPct(5);
       current_page = DIM_PAGE;
     }
   }
