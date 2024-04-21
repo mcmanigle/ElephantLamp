@@ -4,7 +4,13 @@
 
 #include "weather_icons.h"
 #include "bulb.h"
+#include "white_noise.h"
 #include "baby.h"
+#include "power_icon.h"
+#include "volume_icon.h"
+#include "back_icon.h"
+#include "plus_icon.h"
+#include "minus_icon.h"
 
 #include "Free_Fonts.h"
 #include "AvenirMedium.h"
@@ -39,7 +45,8 @@ void draw_page_1(TFT_eSprite *sprite) {
   sprite->drawString(nursery_temperature_string, 630, 134);
   sprite->unloadFont();
 
-  sprite->pushImage(10, 90 - bulb_height/2, bulb_width, bulb_height, bulb_data);
+  sprite->pushImage(30 - bulb_width/2, 50 - bulb_height/2, bulb_width, bulb_height, bulb_data);
+  sprite->pushImage(30 - white_noise_width/2, 130 - white_noise_height/2, white_noise_width, white_noise_height, white_noise_data);
 }
 
 void draw_dim_page(TFT_eSprite *sprite) {
@@ -95,6 +102,38 @@ void draw_lamp_page(TFT_eSprite *sprite) {
   sprite->drawString("Bright", x, bottom_line_y);
   sprite->fillCircle(x, circle_y, r+stroke, stroke_color);
   sprite->fillCircle(x, circle_y, r, rgb(242, 242, 255));
+
+  sprite->unloadFont();
+}
+
+void draw_white_noise_page(TFT_eSprite *sprite) {
+  const int bottom_line_y = 135;
+  const int horizontal_step = 128;
+  int x = horizontal_step / 2;
+  const int icon_y = 92;
+  const int r = 25;
+  const int stroke = 2;
+  const unsigned short stroke_color = TFT_LIGHTGREY;
+
+  sprite->fillSprite(TFT_BLACK);
+
+  sprite->loadFont(AvenirNextCondensed36);
+  sprite->setTextDatum(TC_DATUM);
+  sprite->drawString("White Noise Machine", 320, 10);
+  
+  x = 64;
+  sprite->drawString("Back", x, bottom_line_y);
+  sprite->pushImage(x - back_icon_width/2, icon_y - back_icon_height/2, back_icon_width, back_icon_height, back_icon_data);
+
+  x = 244;
+  sprite->drawString("Power", x, bottom_line_y);
+  sprite->pushImage(x - power_icon_width/2, icon_y - power_icon_height/2, power_icon_width, power_icon_height, power_icon_data);
+
+  x = 488;
+  sprite->drawString("Volume", x, bottom_line_y);
+  sprite->pushImage(x - volume_icon_width/2, icon_y - volume_icon_height/2, volume_icon_width, volume_icon_height, volume_icon_data);
+  sprite->pushImage(x - 88 - minus_icon_width/2, icon_y - minus_icon_height/2, minus_icon_width, minus_icon_height, minus_icon_data);
+  sprite->pushImage(x + 88 - plus_icon_width/2, icon_y - plus_icon_height/2, plus_icon_width, plus_icon_height, plus_icon_data);
 
   sprite->unloadFont();
 }

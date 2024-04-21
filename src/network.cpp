@@ -1,7 +1,5 @@
-#include <ArduinoJson.h>
-
-#include "esp_http_client.h"
 #include "network.h"
+#include "esp_http_client.h"
 #include "secrets.h"
 #include "http_extras.h"
 
@@ -13,12 +11,6 @@ const char* ha_weather_path        = "/api/states/weather.510_grant_forest";
 const char* ha_forecast_path       = "/api/states/sensor.home_forecast_hourly";
 const char* ha_nursery_temp_path   = "/api/states/sensor.nursery_temperature";
 const char* ha_millis_path         = "/api/states/input_number.elephant_lamp_millis";
-
-const char* ha_light_turn_on_path  = "/api/services/light/turn_on";
-const char* ha_light_turn_off_path = "/api/services/light/turn_off";
-const char* ha_light_entity_id     = "light.main_bedroom_hue_room";
-
-const char* ha_authorization_token = HA_AUTHORIZATION_TOKEN;
 
 const unsigned char ha_debug_level = 5;
 
@@ -63,7 +55,7 @@ void loopNetwork() {
   }
 }
 
-JsonDocument retrieveHAJson(const char *path, JsonDocument *post_data = NULL) {
+JsonDocument retrieveHAJson(const char *path, JsonDocument *post_data) {
   JsonDocument result;
 
   char *http_buffer = (char *)calloc(MAX_HTTP_OUTPUT_BUFFER+1, sizeof(char));
@@ -82,7 +74,7 @@ JsonDocument retrieveHAJson(const char *path, JsonDocument *post_data = NULL) {
     .user_data = http_buffer,
   };
   esp_http_client_handle_t client = esp_http_client_init(&http_client_config);
-  esp_http_client_set_header(client, "Authorization", ha_authorization_token);
+  esp_http_client_set_header(client, "Authorization", HA_AUTHORIZATION_TOKEN);
 
   if(post_data) {
     post_json_length = measureJson(*post_data);
@@ -231,57 +223,4 @@ void updateHA() {
   }
 
   command = (command + 1) % 5;
-}
-
-
-void setLamp(enum LampSetting setting)
-{
-  JsonDocument lamp_reply;
-  JsonDocument post_params;
-
-  post_params["entity_id"] = ha_light_entity_id;
-  post_params["transition"] = 1;
-  
-  switch (setting)
-  {
-  case OFF:
-    break;
-  
-  case GLOW:
-    post_params["brightness_pct"]    =   10;
-    post_params["rgb_color"][0]      =  255;
-    post_params["rgb_color"][1]      =   45;
-    post_params["rgb_color"][2]      =   45;
-    break;
-  
-  case RED:
-    post_params["brightness_pct"]    =   40;
-    post_params["rgb_color"][0]      =  255;
-    post_params["rgb_color"][1]      =   45;
-    post_params["rgb_color"][2]      =   45;
-    break;
-  
-  case RELAX:
-    post_params["brightness_pct"]    =   50;
-    post_params["color_temp_kelvin"] = 2200;
-    break;
-  
-  case BRIGHT:
-    post_params["brightness_pct"]    =   80;
-    post_params["color_temp_kelvin"] = 2800;
-    break;
-  
-  default:
-    break;
-  }
-
-  if(setting == OFF) lamp_reply = retrieveHAJson(ha_light_turn_off_path, &post_params);
-  else               lamp_reply = retrieveHAJson(ha_light_turn_on_path,  &post_params);
-
-  if(!lamp_reply.isNull() && ha_debug_level > 4)
-  {
-    Serial.println("HA Lamp Set succeeded: ");
-    serializeJsonPretty(lamp_reply, Serial);
-    Serial.println();
-  }
 }

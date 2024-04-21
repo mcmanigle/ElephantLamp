@@ -3,8 +3,6 @@
 #include <Arduino.h>
 #include <Wire.h>
 
-#include "pins_config.h"
-
 #define AXS_TOUCH_ONE_POINT_LEN             6
 #define AXS_TOUCH_BUF_HEAD_LEN              2
 
@@ -78,7 +76,7 @@ void loopTouch() {
 void readTouch()
 {
   Serial.println("readTouch()");
-  
+
   const int debug = 0;
   int code = 0;
 

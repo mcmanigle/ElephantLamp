@@ -1,5 +1,7 @@
 #pragma once
 
+#include <ArduinoJson.h>
+
 #include <time.h>
 
 extern struct tm timeinfo;
@@ -15,12 +17,4 @@ extern char forecast_weather_strings[][32];
 
 void loopNetwork();
 
-enum LampSetting {
-  OFF,
-  GLOW,
-  RED,
-  RELAX,
-  BRIGHT
-};
-
-void setLamp(enum LampSetting setting);
+JsonDocument retrieveHAJson(const char *path, JsonDocument *post_data = NULL);
