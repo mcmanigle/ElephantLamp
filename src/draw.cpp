@@ -23,7 +23,7 @@ unsigned short rgb(unsigned char r, unsigned char g, unsigned char b)
   return ((r & 0xf8) << 8) | ((g & 0xfc) << 3) | (b >> 3);
 }
 
-void draw_page_1(TFT_eSprite *sprite) {
+void draw_page_1(TFT_eSprite *sprite, bool decluttered) {
   sprite->fillSprite(TFT_BLACK);
 
   sprite->setTextColor(TFT_WHITE, TFT_BLACK);
@@ -45,8 +45,10 @@ void draw_page_1(TFT_eSprite *sprite) {
   sprite->drawString(nursery_temperature_string, 630, 134);
   sprite->unloadFont();
 
-  sprite->pushImage(30 - bulb_width/2, 50 - bulb_height/2, bulb_width, bulb_height, bulb_data);
-  sprite->pushImage(30 - white_noise_width/2, 130 - white_noise_height/2, white_noise_width, white_noise_height, white_noise_data);
+  if(!decluttered) {
+    sprite->pushImage(30 - bulb_width/2, 50 - bulb_height/2, bulb_width, bulb_height, bulb_data);
+    sprite->pushImage(30 - white_noise_width/2, 130 - white_noise_height/2, white_noise_width, white_noise_height, white_noise_data);
+  }
 }
 
 void draw_dim_page(TFT_eSprite *sprite) {
