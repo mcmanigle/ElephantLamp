@@ -7,3 +7,4 @@ src/secrets.h
 .DS_Store
 images/
 log/
+secrets.h

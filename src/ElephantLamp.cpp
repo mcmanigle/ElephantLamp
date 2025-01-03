@@ -6,6 +6,7 @@
 #include "station.h"
 #include "network.h"
 #include "ha_devices.h"
+#include "telemetry.h"
 
 #include "AXS15231B.h"
 #include "touch.h"
@@ -171,8 +172,8 @@ void setup()
 }
 
 void loop() {
-  // Serial.printf("%lu - loop()   ", millis());
-  // printRamInfo();
+  Serial.printf("%lu - loop()   ", millis());
+  printRamInfo();
 
   loopNetwork();
   loopTouch();

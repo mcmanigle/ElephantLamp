@@ -77,7 +77,7 @@ void readTouch()
 {
   Serial.println("readTouch()");
 
-  const int debug = 0;
+  const int debug = 10;
   int code = 0;
 
   uint8_t buff[20] = {0};
